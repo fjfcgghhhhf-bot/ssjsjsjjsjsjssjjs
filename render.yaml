@@ -1,0 +1,29 @@
+# One instance owns the shared arena. Do not enable horizontal autoscaling.
+services:
+  - type: web
+    name: paper-code-arena
+    runtime: docker
+    repo: https://github.com/fjfcgghhhhf-bot/ssjsjsjjsjsjssjjs
+    branch: main
+    plan: free
+    region: frankfurt
+    numInstances: 1
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: BOT_COUNT
+        value: "2"
+      - key: MAX_PLAYERS
+        value: "48"
+      - key: MAX_CONNECTIONS
+        value: "128"
+      - key: CODE_TTL_MS
+        value: "40000"
+      - key: CODE_RESPAWN_MS
+        value: "7000"
