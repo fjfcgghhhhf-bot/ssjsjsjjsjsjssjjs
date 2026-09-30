@@ -82,7 +82,7 @@ export class Renderer {
   paintCell(i) {
     if (!this.state) return;
     const c = this.cell, x = i % this.state.width, y = Math.floor(i / this.state.width);
-    const ctx = this.terrainCtx, owner = this.grid[i], color = this.palette.get(owner) ?? '#8b5cf6';
+    const ctx = this.terrainCtx, owner = this.grid[i], color = this.palette.get(owner) ?? '#f5b8d4';
     ctx.clearRect(x * c, y * c, c, c);
     if (!owner) return;
     ctx.fillStyle = light(color, .34); ctx.fillRect(x * c, y * c, c, c);
@@ -96,7 +96,7 @@ export class Renderer {
     ctx.stroke();
   }
 
-  burst(x, y, color = '#8b5cf6') {
+  burst(x, y, color = '#f5b8d4') {
     if (this.reducedMotion) return;
     for (let i = 0; i < 16; i++) this.particles.push({ x, y, vx: (Math.random() - .5) * 5, vy: (Math.random() - .5) * 5, age: 0, color });
   }
@@ -106,7 +106,7 @@ export class Renderer {
     const ctx = this.ctx, { w, h } = this;
     if (w && h) {
       ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
-      ctx.clearRect(0, 0, w, h); ctx.fillStyle = '#f1f0ea'; ctx.fillRect(0, 0, w, h);
+      ctx.clearRect(0, 0, w, h); ctx.fillStyle = '#18141e'; ctx.fillRect(0, 0, w, h);
       if (this.snapshots.frames.length) this.drawWorld(now, dt);
     }
     requestAnimationFrame(t => this.frame(t));
@@ -129,15 +129,15 @@ export class Renderer {
     const s = this.camera.scale;
     const offsetX = this.w / 2 - this.camera.x * s, offsetY = this.h / 2 - this.camera.y * s;
     ctx.save(); ctx.translate(offsetX, offsetY); ctx.scale(s, s);
-    ctx.fillStyle = '#e9e6e3'; ctx.fillRect(-100, -100, state.width + 200, state.height + 200);
-    ctx.fillStyle = '#f2f1eb'; ctx.fillRect(0, 0, state.width, state.height);
-    ctx.strokeStyle = '#e8e6e0'; ctx.lineWidth = .035;
+    ctx.fillStyle = '#100c15'; ctx.fillRect(-100, -100, state.width + 200, state.height + 200);
+    ctx.fillStyle = '#19141f'; ctx.fillRect(0, 0, state.width, state.height);
+    ctx.strokeStyle = '#302237'; ctx.lineWidth = .035;
     ctx.beginPath();
     for (let x = 0; x <= state.width; x++) { ctx.moveTo(x, 0); ctx.lineTo(x, state.height); }
     for (let y = 0; y <= state.height; y++) { ctx.moveTo(0, y); ctx.lineTo(state.width, y); }
     ctx.stroke();
     ctx.drawImage(this.terrain, 0, 0, state.width, state.height);
-    ctx.strokeStyle = '#c9bdcf'; ctx.lineWidth = .2; ctx.setLineDash([.5, .4]); ctx.strokeRect(0, 0, state.width, state.height); ctx.setLineDash([]);
+    ctx.strokeStyle = '#80526f'; ctx.lineWidth = .2; ctx.setLineDash([.5, .4]); ctx.strokeRect(0, 0, state.width, state.height); ctx.setLineDash([]);
 
     for (const p of players) {
       if (!p.trail.length && p.trailAnchor == null) continue;
@@ -157,11 +157,11 @@ export class Renderer {
       if (!code.active) continue;
       const pulse = this.reducedMotion ? 0 : Math.sin(now / 550 + Number(code.value)) * .07;
       ctx.save(); ctx.translate(code.x + .5, code.y + .5 + pulse);
-      ctx.shadowColor = '#9a7abe30'; ctx.shadowBlur = s; ctx.shadowOffsetY = s * .2;
-      ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.roundRect(-1.05, -.75, 2.1, 1.5, .22); ctx.fill(); ctx.shadowColor = 'transparent';
-      ctx.strokeStyle = '#c3b0e0'; ctx.lineWidth = .07; ctx.stroke();
-      ctx.fillStyle = '#9370c1'; ctx.font = `700 ${Math.max(.65, 10 / s)}px 'Segoe UI',sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(code.value, 0, .01);
-      ctx.fillStyle = '#b397d6'; ctx.beginPath(); ctx.moveTo(-.2, .87); ctx.lineTo(.2, .87); ctx.lineTo(0, 1.1); ctx.fill();
+      ctx.shadowColor = '#f5b8d445'; ctx.shadowBlur = s; ctx.shadowOffsetY = s * .2;
+      ctx.fillStyle = '#f5b8d4'; ctx.beginPath(); ctx.roundRect(-1.05, -.75, 2.1, 1.5, .22); ctx.fill(); ctx.shadowColor = 'transparent';
+      ctx.strokeStyle = '#ffe0ee'; ctx.lineWidth = .07; ctx.stroke();
+      ctx.fillStyle = '#4a263d'; ctx.font = `700 ${Math.max(.65, 10 / s)}px 'Segoe UI',sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(code.value, 0, .01);
+      ctx.fillStyle = '#f5b8d4'; ctx.beginPath(); ctx.moveTo(-.2, .87); ctx.lineTo(.2, .87); ctx.lineTo(0, 1.1); ctx.fill();
       ctx.restore();
     }
 
@@ -178,7 +178,7 @@ export class Renderer {
       ctx.fillRect(eyeX - .15, eyeY - .08, .1, .12); ctx.fillRect(eyeX + .05, eyeY - .08, .1, .12);
       if (p.shield) { ctx.strokeStyle = '#ffffffb0'; ctx.lineWidth = .08; ctx.beginPath(); ctx.arc(0, 0, .72, 0, Math.PI * 2); ctx.stroke(); }
       ctx.font = `600 ${Math.max(.7, 9 / s)}px 'Segoe UI',sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-      ctx.fillStyle = '#ffffffda'; const measure = ctx.measureText(p.name).width;
+      ctx.fillStyle = '#211829eb'; const measure = ctx.measureText(p.name).width;
       ctx.beginPath(); ctx.roundRect(-measure / 2 - .22, -1.65, measure + .44, .85, .16); ctx.fill();
       ctx.fillStyle = p.color; ctx.fillText(p.name, 0, -1.02);
       if (p.id === this.selfId) {
@@ -198,18 +198,18 @@ export class Renderer {
       const dx = px - this.w / 2, dy = py - this.h / 2;
       const factor = Math.min((this.w / 2 - 29) / Math.max(1, Math.abs(dx)), (this.h / 2 - 33) / Math.max(1, Math.abs(dy)));
       const x = this.w / 2 + dx * factor, y = this.h / 2 + dy * factor;
-      ctx.fillStyle = '#ffffffdc'; ctx.beginPath(); ctx.roundRect(x - 18, y - 10, 36, 20, 5); ctx.fill();
-      ctx.fillStyle = '#a184c5'; ctx.font = "600 9px 'Segoe UI',sans-serif"; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(c.value, x, y);
+      ctx.fillStyle = '#efb4d0'; ctx.beginPath(); ctx.roundRect(x - 18, y - 10, 36, 20, 5); ctx.fill();
+      ctx.fillStyle = '#4a263d'; ctx.font = "600 9px 'Segoe UI',sans-serif"; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(c.value, x, y);
     }
   }
 
   drawMinimap() {
     const ctx = this.ctx, state = this.state, width = 105, height = width * state.height / state.width;
     const x = this.w - width - 16, y = 17;
-    ctx.save(); ctx.globalAlpha = .9; ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.roundRect(x - 5, y - 5, width + 10, height + 10, 7); ctx.fill();
-    ctx.fillStyle = '#f0eee7'; ctx.fillRect(x, y, width, height); ctx.drawImage(this.terrain, x, y, width, height);
+    ctx.save(); ctx.globalAlpha = .9; ctx.fillStyle = '#392538'; ctx.beginPath(); ctx.roundRect(x - 5, y - 5, width + 10, height + 10, 7); ctx.fill();
+    ctx.fillStyle = '#211829'; ctx.fillRect(x, y, width, height); ctx.drawImage(this.terrain, x, y, width, height);
     for (const p of this.presentedPlayers) { ctx.fillStyle = p.color; const px = x + p.position.x / state.width * width, py = y + p.position.y / state.height * height; ctx.fillRect(px - 1.5, py - 1.5, 3, 3); if (p.id === this.selfId) { ctx.strokeStyle = p.color; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.stroke(); } }
-    for (const c of state.codes) if (c.active) { ctx.fillStyle = '#836098'; ctx.fillRect(x + c.x / state.width * width - 1, y + c.y / state.height * height - 1, 2, 2); }
+    for (const c of state.codes) if (c.active) { ctx.fillStyle = '#f5b8d4'; ctx.fillRect(x + c.x / state.width * width - 1, y + c.y / state.height * height - 1, 2, 2); }
     ctx.restore();
   }
 }

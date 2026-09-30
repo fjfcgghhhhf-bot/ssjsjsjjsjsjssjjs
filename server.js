@@ -5,7 +5,7 @@ import path from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import { WebSocket, WebSocketServer } from 'ws';
-import { Game } from './src/game.js';
+import { RoundGame } from './src/round-game.js';
 
 const PUBLIC = path.resolve(fileURLToPath(new URL('./public/', import.meta.url)));
 const MIME = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' };
@@ -17,7 +17,7 @@ const numberEnv = (key, fallback, min, max) => {
 /** One process = one shared global arena, including every connected browser.
  * Exporting the factory makes real HTTP/WebSocket integration tests possible. */
 export function createGameServer(options = {}) {
-  const game = options.game ?? new Game({
+  const game = options.game ?? new RoundGame({
     codeTTL: numberEnv('CODE_TTL_MS', 40000, 1000, 300000),
     codeRespawn: numberEnv('CODE_RESPAWN_MS', 7000, 1000, 60000),
     maxPlayers: numberEnv('MAX_PLAYERS', 48, 2, 100),
@@ -40,7 +40,7 @@ export function createGameServer(options = {}) {
     catch { res.writeHead(400, headers).end(); return; }
     if (pathname === '/health') {
       res.writeHead(200, { ...headers, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
-      res.end(req.method === 'HEAD' ? '' : JSON.stringify({ status: 'ok', arena: 'global', players: game.snapshot().players.length, clients: wss.clients.size }));
+      res.end(req.method === 'HEAD' ? '' : JSON.stringify({ status: 'ok', arena: 'global', players: game.snapshot().players.length, clients: wss.clients.size, phase: game.phase ?? 'playing' }));
       return;
     }
     const target = path.resolve(PUBLIC, `.${pathname === '/' ? '/index.html' : pathname}`);
@@ -99,6 +99,9 @@ export function createGameServer(options = {}) {
           sessions.set(token, session);
         }
         session.ws = ws; session.disconnectedAt = null; ws.session = session;
+        game.setConnected?.(session.playerId, true);
+        const restored = game.players.get(session.playerId);
+        if (restored) session.codes = [...restored.codes];
         send(ws, { type: 'hello', token: session.token, selfId: session.playerId, collection: session.codes });
         full(ws);
       } else if (msg.type === 'join' && ws.session) {
@@ -125,11 +128,14 @@ export function createGameServer(options = {}) {
       }
     });
     ws.on('close', () => {
-      if (ws.session?.ws === ws) { ws.session.ws = null; ws.session.disconnectedAt = game.time; }
+      if (ws.session?.ws === ws) {
+        ws.session.ws = null; ws.session.disconnectedAt = game.time;
+        game.setConnected?.(ws.session.playerId, false);
+      }
     });
   });
 
-  let last = performance.now(), snapshotCounter = 0, stopped = false;
+  let last = performance.now(), snapshotCounter = 0, stopped = false, boardEpoch = game.boardEpoch;
   const simulation = setInterval(() => {
     const now = performance.now();
     game.step(now - last); last = now;
@@ -150,7 +156,8 @@ export function createGameServer(options = {}) {
   const snapshots = setInterval(() => {
     const state = { type: 'state', ...game.snapshot(), patch: game.drainPatch() };
     // Periodic full snapshots also recover clients after a suspended tab.
-    if (++snapshotCounter % 75 === 0) state.grid = [...game.grid];
+    if (++snapshotCounter % 75 === 0 || game.boardEpoch !== boardEpoch) state.grid = [...game.grid];
+    boardEpoch = game.boardEpoch;
     broadcast(state);
   }, 1000 / game.config.snapshotRate);
   const heartbeat = setInterval(() => {

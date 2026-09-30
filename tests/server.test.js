@@ -4,6 +4,7 @@ import { once } from 'node:events';
 import { WebSocket } from 'ws';
 import { createGameServer } from '../server.js';
 import { Game } from '../src/game.js';
+import { RoundGame } from '../src/round-game.js';
 
 function inbox(ws) {
   const messages = [], waiters = [];
@@ -47,6 +48,30 @@ test('the default global arena starts with exactly two bots', async t => {
   if (previous !== undefined) process.env.BOT_COUNT = previous;
   t.after(() => app.close());
   assert.equal(app.game.snapshot().players.filter(p => p.bot).length, 2);
+  assert.equal(app.game.phase, 'waiting'); assert.equal(app.game.codes.size, 0);
+});
+
+test('four joined sockets start a round; spectators and bots do not count, disconnected readiness cancels', async t => {
+  const game = new RoundGame({ countdownMs: 180 });
+  const app = createGameServer({ game, botCount: 2 }); t.after(() => app.close());
+  const address = await app.listen(0, '127.0.0.1'), url = `ws://127.0.0.1:${address.port}/ws`;
+  const peers = await Promise.all(Array.from({ length: 4 }, () => client(url)));
+  for (let i = 0; i < 3; i++) peers[i].send({ type: 'join', name: `Ready ${i}` });
+  await peers[0].box.wait(m => m.type === 'state' && m.match.humanCount === 3);
+  assert.equal(game.phase, 'waiting'); assert.equal(game.codes.size, 0);
+  peers[3].send({ type: 'join', name: 'Fourth' });
+  await peers[0].box.wait(m => m.type === 'state' && m.match.phase === 'countdown');
+  const serverClosed = once([...app.wss.clients].find(ws => ws.session?.token === peers[3].hello.token), 'close');
+  peers[3].ws.close(); await serverClosed;
+  await peers[0].box.wait(m => m.type === 'events' && m.events.some(e => e.type === 'countdown-cancelled'));
+  assert.equal(game.phase, 'waiting'); assert.equal(game.humans().length, 3);
+  const resumed = await client(url, peers[3].hello.token);
+  const frame = await resumed.box.wait(m => m.type === 'state' && m.match.phase === 'playing' && m.grid);
+  assert.equal(frame.match.humanCount, 4); assert.equal(frame.players.filter(p => p.bot).length, 2);
+  assert.deepEqual(frame.codes.map(c => c.value), ['876']);
+  const shared = await peers[0].box.wait(m => m.type === 'state' && m.patch && m.match.phase === 'playing');
+  const same = await resumed.box.wait(m => m.type === 'state' && m.patch && m.time === shared.time);
+  assert.deepEqual(shared.players, same.players); assert.deepEqual(shared.codes, same.codes);
 });
 
 test('real WebSocket clients share one arena, terrain, pickup and expiry events', async t => {

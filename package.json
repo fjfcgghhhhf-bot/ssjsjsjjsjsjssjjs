@@ -1,6 +1,6 @@
 {
   "name": "paper-code-arena",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "description": "Server-authoritative multiplayer territory game with collectible codes",
@@ -10,7 +10,7 @@
     "dev": "node --watch server.js",
     "build:css": "tailwindcss -i styles/tailwind.css -o public/tailwind.css --minify",
     "test": "node --test",
-    "check": "node --check server.js && node --check src/game.js && node --check public/app.js && node --check public/renderer.js && node --check public/snapshots.js"
+    "check": "node --check server.js && node --check src/game.js && node --check src/round-game.js && node --check public/app.js && node --check public/renderer.js && node --check public/snapshots.js"
   },
   "dependencies": { "ws": "8.22.0" },
   "devDependencies": { "@tailwindcss/cli": "4.3.3", "tailwindcss": "4.3.3" }

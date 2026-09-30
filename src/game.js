@@ -18,7 +18,9 @@ export class Game {
     this.nextId = 1;
     this.revision = 0;
     this.botRespawns = [];
-    for (const value of CODE_VALUES) this.spawnCode(value);
+    // RoundGame owns code scheduling in production. The standalone simulation
+    // can still exercise pickup/expiry rules without a lobby in unit tests.
+    if (options.autoCodes !== false) for (const value of CODE_VALUES) this.spawnCode(value);
   }
 
   index(x, y) { return y * this.width + x; }

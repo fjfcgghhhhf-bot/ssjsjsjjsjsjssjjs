@@ -25,7 +25,8 @@ export class SnapshotBuffer {
 
   add(state, now) {
     const newest = this.frames.at(-1);
-    const restarted = Boolean(newest && state.time < newest.state.time);
+    // A fresh round relocates avatars. Never interpolate across that reset.
+    const restarted = Boolean(newest && (state.time < newest.state.time || state.match?.boardEpoch !== newest.state.match?.boardEpoch));
     if (restarted) this.reset();
     const offset = state.time - now;
     this.offsetSamples.push(offset);

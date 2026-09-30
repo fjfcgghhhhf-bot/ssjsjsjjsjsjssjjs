@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Game } from '../src/game.js';
-import { CODE_VALUES } from '../src/config.js';
+import { CODE_VALUES, COLORS } from '../src/config.js';
 
 const make = options => new Game({ width: 24, height: 24, spawnRadius: 1, random: () => .37, ...options });
 function player(game, x, y, name = 'Test') {
@@ -20,7 +20,7 @@ function move(game, p, dir) {
 
 test('spawn creates a clear base, sanitizes names and chooses a known color', () => {
   const game = make(), p = game.addPlayer({ name: '<img>\u0000Alice', color: -8 });
-  assert.equal(p.name, 'imgAlice'); assert.equal(p.cells, 9); assert.equal(p.color, '#8b5cf6');
+  assert.equal(p.name, 'imgAlice'); assert.equal(p.cells, 9); assert.equal(p.color, COLORS[0]);
   const q = game.addPlayer(); assert.ok(q); assert.notEqual(p.id, q.id);
   assert.equal([...game.grid].filter(i => i === p.id).length, 9);
 });

@@ -12,6 +12,15 @@ const state = (time, changes = {}) => {
   return { time, width: 84, height: 60, speed: 6, players: [actor({ x: Math.floor(distance), progress: distance % 1, ...changes })], codes: [] };
 };
 const cornerTime = 1000 / 6;
+
+test('a new board epoch snaps to the new round without interpolating across reset positions', () => {
+  const buffer = new SnapshotBuffer();
+  buffer.add({ ...state(100), match: { boardEpoch: 0 } }, 100);
+  buffer.sample(110);
+  assert.equal(buffer.add({ ...state(200, { x: 50, progress: 0 }), match: { boardEpoch: 1 } }, 200), true);
+  assert.equal(buffer.frames.length, 1);
+  assert.equal(buffer.sample(200).players[0].position.x, 50.5);
+});
 const before = actor({ progress: .6 });
 const after = actor({ x: 1, dir: 'down', progress: .2, trail: [1], trailAnchor: 0,
   motion: [...before.motion, { x: 1.5, y: .5, time: cornerTime, dir: 'down', trailLength: 1, trailEpoch: 0, trailAnchor: 0 }] });
